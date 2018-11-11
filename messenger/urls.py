@@ -22,10 +22,11 @@ import dialogs.views
 
 router = routers.DefaultRouter()
 router.register(r'users', accounts.views.CustomUserViewSet)
-router.register(r'threads', dialogs.views.ThreadViewSet)
-router.register(r'messages', dialogs.views.MessageViewSet)
+# router.register(r'threads', dialogs.views.ThreadViewSet)
+# router.register(r'messages', dialogs.views.MessageViewSet)
 
 urlpatterns = [
-    path(r'api/', include(router.urls)),
+    #path('api/', include(router.urls)),
+    path('api/', include('dialogs.urls')),
     path('admin/', admin.site.urls),
 ]
