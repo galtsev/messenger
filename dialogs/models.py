@@ -8,6 +8,9 @@ class Thread(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
+    def is_member(self, user_id):
+        return self.participants.filter(id=user_id).exists()
+
 
 class Message(models.Model):
     text = models.TextField()

@@ -12,3 +12,6 @@ class CustomUser(AbstractUser):
 
     # fields
     user_type = models.CharField(max_length=32, choices=USER_TYPES, default=DRIVER)
+
+    def is_admin(self):
+        return self.user_type == CustomUser.ADMIN
