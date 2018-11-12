@@ -5,6 +5,7 @@ from rest_framework.response import Response
 
 
 from dialogs.serializers import ThreadSerializer, MessageSerializer
+from dialogs import serializers as sr
 from accounts.models import CustomUser
 from dialogs import models
 
@@ -59,8 +60,11 @@ def get_thread_view(request, pk):
 @permission_classes([MemberOnly])
 def add_participant(request, thread_id):
     thread = get_thread(pk=thread_id)
-    participant_id = request.data['id']
-    participant = CustomUser.objects.get(pk=participant_id)
+    #participant_id = request.data['id']
+    serializer = sr.UserIdSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    participant = CustomUser.objects.get(pk=serializer.data['user_id'])
     if participant.is_admin():
         raise ValidationError(detail="Only one admin allowed for thread")
     thread.participants.add(participant)
@@ -92,11 +96,10 @@ class MessageView(APIView):
 
     def post(self, request, thread_id):
         thread = get_thread(thread_id)
-        # TODO: serializer for Message create
-        text = request.data["text"].strip()
-        if text:
-            message = models.Message(text=text, thread=thread, sender = request.user)
+        serializer = sr.MessageCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            message = models.Message(text=serializer.data['text'], thread=thread, sender = request.user)
             message.save()
             serializer = MessageSerializer(message)
             return Response(serializer.data)
-        return Response(dict(text="Empty message body"), status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

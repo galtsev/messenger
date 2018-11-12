@@ -8,7 +8,16 @@ class ThreadSerializer(serializers.ModelSerializer):
         fields = ["id", "participants", "created", "updated"]
         read_only_fields = ["participants"]
 
+
 class MessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Message
         fields = ["id", "text", "sender", "thread", "created"]
+
+
+class UserIdSerializer(serializers.Serializer):
+    user_id = serializers.IntegerField()
+
+
+class MessageCreateSerializer(serializers.Serializer):
+    text = serializers.CharField()
