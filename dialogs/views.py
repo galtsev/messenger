@@ -24,12 +24,18 @@ class MemberOnly(permissions.BasePermission):
 
 class ThreadList(APIView):
     def get(self, request):
+        """
+        Return list of threads, current user participate in
+        """
         threads = models.Thread.objects.filter(participants__id=request.user.id)
         serializer = ThreadSerializer(threads, many=True)
         return Response(serializer.data)
 
-    @permission_classes([AdminOnly])
     def post(self, request):
+        """
+        Create new thread (admin only), add current user to participants
+
+        """
         if not request.user.is_admin():
             raise exceptions.PermissionDenied(detail="Only admin can create threads")
         serializer = ThreadSerializer(data=request.data)
@@ -51,6 +57,9 @@ def get_thread(pk):
 
 @api_view()
 def get_thread_view(request, pk):
+    """
+    Get Thread by id
+    """
     thread = get_thread(pk)
     serializer = ThreadSerializer(thread)
     return Response(serializer.data)
@@ -59,8 +68,13 @@ def get_thread_view(request, pk):
 @api_view(['POST'])
 @permission_classes([MemberOnly])
 def add_participant(request, thread_id):
+    """
+    Add participant to thread.
+    It's prohibited to add Admin, as
+        1. Initial admin (thread creator) already participate
+        2. There must be only one Admin in the thread
+    """
     thread = get_thread(pk=thread_id)
-    #participant_id = request.data['id']
     serializer = sr.UserIdSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -75,6 +89,10 @@ def add_participant(request, thread_id):
 @api_view(['DELETE'])
 @permission_classes([AdminOnly, MemberOnly])
 def remove_participant(request, thread_id, user_id):
+    """
+    Remove participant from thread.
+    Remove thread, if requested to delete thread admin.
+    """
     thread = get_thread(pk=thread_id)
     if user_id == request.user.id:
         thread.delete()
@@ -89,12 +107,18 @@ class MessageView(APIView):
     permission_classes = [MemberOnly]
 
     def get(self, request, thread_id):
+        """
+        List messages of the thread
+        """
         thread = get_thread(thread_id)
         messages = models.Message.objects.filter(thread__id=thread_id)
         serializer = MessageSerializer(messages, many=True)
         return Response(serializer.data)
 
     def post(self, request, thread_id):
+        """
+        Add new message to the thread
+        """
         thread = get_thread(thread_id)
         serializer = sr.MessageCreateSerializer(data=request.data)
         if serializer.is_valid():
